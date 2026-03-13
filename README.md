@@ -5,7 +5,7 @@ A production-ready FastAPI boilerplate following industry best practices for sca
 ## ✨ Features
 
 - **Domain-driven architecture** - Code organized by business domains
-- **Async/await support** - Proper async handling for optimal performance  
+- **Async/await support** - Proper async handling for optimal performance
 - **JWT Authentication** - Secure token-based authentication with bcrypt
 - **Database integration** - PostgreSQL with async SQLAlchemy + Alembic migrations
 - **Comprehensive testing** - Async test client with pytest
@@ -14,6 +14,7 @@ A production-ready FastAPI boilerplate following industry best practices for sca
 - **Health checks** - Basic and detailed health endpoints with DB monitoring
 - **Code quality** - Ruff for formatting and linting
 - **Docker support** - Easy PostgreSQL setup with Docker Compose
+- **Domain scaffolding** - Automated domain creation with Makefile commands
 
 ## 🚀 Quick Start
 
@@ -84,12 +85,23 @@ python run.py start        # Start development server
 python run.py test         # Run tests
 python run.py verify       # Verify setup
 
-# Using Makefile
-make install    # Install dependencies
-make dev        # Start development server
-make test       # Run tests
-make format     # Format code with ruff
-make lint       # Lint code with ruff
+# Using Makefile - Development
+make install       # Install dependencies
+make dev          # Start development server
+make test         # Run tests
+make test-cov     # Run tests with coverage
+make format       # Format code with ruff
+make lint         # Lint code with ruff
+make clean        # Clean cache files
+make setup        # First-time project setup
+
+# Using Makefile - Database
+make migrate msg="description"  # Create new migration
+make upgrade                   # Apply migrations
+
+# Using Makefile - Domain Management
+make new-domain name=domain_name  # Create new domain structure
+make list-domains                # List all existing domains
 ```
 
 ## 🗄️ Database
@@ -98,9 +110,13 @@ make lint       # Lint code with ruff
 ```bash
 # Create new migration
 alembic revision --autogenerate -m "description"
+# Or using Makefile
+make migrate msg="Add new feature"
 
 # Apply migrations
 alembic upgrade head
+# Or using Makefile
+make upgrade
 
 # Rollback migration
 alembic downgrade -1
@@ -143,15 +159,99 @@ curl -X GET "http://localhost:8000/auth/me" \
 ```bash
 # Run all tests
 pytest
+# Or using Makefile
+make test
 
 # Run with coverage
 pytest --cov=src --cov-report=html
+# Or using Makefile
+make test-cov
 
 # Run specific test file
 pytest tests/test_auth.py -v
 ```
 
 ## 🏗️ Adding New Domains
+
+### Automated Domain Creation (Recommended)
+
+Use the Makefile command to automatically generate a complete domain structure:
+
+```bash
+# Create a new domain (e.g., products, orders, users)
+make new-domain name=products
+
+# List all existing domains
+make list-domains
+```
+
+This creates:
+```
+src/products/
+├── __init__.py          # Domain package
+├── models.py           # SQLAlchemy models with base fields
+├── schemas.py          # Pydantic schemas (Create, Update, Response)
+├── service.py          # Business logic with CRUD operations
+└── router.py           # FastAPI endpoints
+
+tests/products/
+├── __init__.py
+└── test_products.py    # Basic test structure
+```
+
+### After Creating a Domain
+
+1. **Customize the model** - Add your specific fields to `models.py`:
+```python
+# Example: src/products/models.py
+class Product(Base):
+    __tablename__ = "products"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+```
+
+2. **Update schemas** - Add validation rules to `schemas.py`:
+```python
+# Example: src/products/schemas.py
+class ProductCreate(ProductBase):
+    name: str
+    price: float
+    description: Optional[str] = None
+
+class ProductResponse(ProductBase):
+    id: int
+    name: str
+    price: float
+    description: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+```
+
+3. **Register router** - Add to `src/main.py`:
+```python
+from src.products.router import router as products_router
+app.include_router(products_router)
+```
+
+4. **Create and apply migration**:
+```bash
+make migrate msg="Add products domain"
+make upgrade
+```
+
+5. **Run tests**:
+```bash
+make test
+```
+
+### Manual Domain Creation
+
+If you prefer manual setup:
 
 1. Create domain directory: `src/your_domain/`
 2. Add required files: `router.py`, `schemas.py`, `models.py`, `service.py`
@@ -193,6 +293,7 @@ app.include_router(your_domain_router, prefix="/your-domain", tags=["Your Domain
 - Write tests for new functionality
 - Use dependency injection for validation
 - Follow database naming conventions
+- Use `make new-domain` for consistent domain structure
 
 ## 📝 License
 
