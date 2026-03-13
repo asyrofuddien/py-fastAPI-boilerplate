@@ -4,6 +4,7 @@ from sqlalchemy import text
 from src.config import settings
 from src.middleware import setup_middleware
 from src.auth.router import router as auth_router
+from src.tasks.router import router as tasks_router
 import logging
 
 # Configure logging
@@ -160,6 +161,13 @@ app.include_router(
     auth_router,
     prefix="/auth",
     tags=["Authentication"]
+)
+
+# Include task routes
+app.include_router(
+    tasks_router,
+    prefix="/tasks",
+    tags=["tasks"]
 )
 
 # Root endpoint
