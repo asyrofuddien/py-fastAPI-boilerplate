@@ -1,14 +1,10 @@
-.PHONY: install run test lint format clean migrate
+.PHONY: install dev test lint format clean migrate upgrade setup
 
 # Install dependencies
 install:
 	pip install -r requirements.txt
 
-# Run the application
-run:
-	python -m src.main
-
-# Run with uvicorn
+# Run development server
 dev:
 	uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
@@ -37,10 +33,6 @@ migrate:
 upgrade:
 	alembic upgrade head
 
-# Rollback migration
-downgrade:
-	alembic downgrade -1
-
 # Clean cache files
 clean:
 	find . -type d -name __pycache__ -delete
@@ -49,11 +41,12 @@ clean:
 	rm -rf htmlcov
 	rm -rf .coverage
 
-# Setup project
+# Setup project (first time)
 setup: install
-	@echo "Project setup complete!"
+	@echo "✅ Dependencies installed!"
+	@echo ""
 	@echo "Next steps:"
 	@echo "1. Copy .env.example to .env and configure"
-	@echo "2. Create PostgreSQL database"
-	@echo "3. Run 'make upgrade' to apply migrations"
-	@echo "4. Run 'make dev' to start development server"
+	@echo "2. Start PostgreSQL: docker-compose up -d postgres"
+	@echo "3. Run migrations: make upgrade"
+	@echo "4. Start server: make dev"

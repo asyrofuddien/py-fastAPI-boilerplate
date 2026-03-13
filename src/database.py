@@ -1,6 +1,15 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy import text
 from src.config import settings
+
+# For SQLAlchemy compatibility
+try:
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+except ImportError:
+    # Fallback for older SQLAlchemy versions - create a simple wrapper
+    def async_sessionmaker(bind, **kwargs):
+        return sessionmaker(bind=bind, **kwargs)
 
 
 # Database engine
@@ -12,7 +21,7 @@ engine = create_async_engine(
 
 # Session factory
 AsyncSessionLocal = async_sessionmaker(
-    engine,
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False
 )

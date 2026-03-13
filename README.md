@@ -1,19 +1,60 @@
-# FastAPI Best Practices Project
+# FastAPI Best Practices Boilerplate
 
-A FastAPI application following industry best practices for scalable, maintainable web applications.
+A production-ready FastAPI boilerplate following industry best practices for scalable, maintainable applications.
 
-## Features
+## ✨ Features
 
 - **Domain-driven architecture** - Code organized by business domains
-- **Async/await support** - Proper async handling for optimal performance
-- **JWT Authentication** - Secure token-based authentication
-- **Database migrations** - Alembic for database schema management
+- **Async/await support** - Proper async handling for optimal performance  
+- **JWT Authentication** - Secure token-based authentication with bcrypt
+- **Database integration** - PostgreSQL with async SQLAlchemy + Alembic migrations
 - **Comprehensive testing** - Async test client with pytest
 - **Input validation** - Pydantic schemas with built-in validators
 - **Middleware support** - CORS, logging, and security middleware
-- **API documentation** - Auto-generated OpenAPI docs
+- **Health checks** - Basic and detailed health endpoints with DB monitoring
+- **Code quality** - Ruff for formatting and linting
+- **Docker support** - Easy PostgreSQL setup with Docker Compose
 
-## Project Structure
+## 🚀 Quick Start
+
+### 1. Clone and Setup
+```bash
+git clone <your-repo>
+cd fastapi-boilerplate
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Environment Configuration
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+
+### 3. Database Setup
+```bash
+# Start PostgreSQL with Docker
+docker-compose up -d postgres
+
+# Run migrations
+alembic upgrade head
+```
+
+### 4. Run Application
+```bash
+# Development server
+python -m src.main
+
+# Or using the helper script
+python run.py start
+```
+
+Visit:
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+
+## 📁 Project Structure
 
 ```
 src/
@@ -32,40 +73,47 @@ src/
 └── main.py             # FastAPI app initialization
 ```
 
-## Setup
+## 🔧 Available Commands
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+# Using run.py helper script
+python run.py setup        # Install dependencies and setup
+python run.py docker-up    # Start PostgreSQL with Docker
+python run.py docker-down  # Stop PostgreSQL
+python run.py start        # Start development server
+python run.py test         # Run tests
+python run.py verify       # Verify setup
 
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials and JWT secret
-   ```
+# Using Makefile
+make install    # Install dependencies
+make dev        # Start development server
+make test       # Run tests
+make format     # Format code with ruff
+make lint       # Lint code with ruff
+```
 
-3. **Set up PostgreSQL database:**
-   ```bash
-   # Create database
-   createdb fastapi_db
-   ```
+## 🗄️ Database
 
-4. **Run database migrations:**
-   ```bash
-   alembic upgrade head
-   ```
+### Migrations
+```bash
+# Create new migration
+alembic revision --autogenerate -m "description"
 
-5. **Start the application:**
-   ```bash
-   python -m src.main
-   # or
-   uvicorn src.main:app --reload
-   ```
+# Apply migrations
+alembic upgrade head
 
-## API Endpoints
+# Rollback migration
+alembic downgrade -1
+```
 
-### Authentication
+### Naming Conventions
+- Tables: `user`, `post`, `user_profile` (singular, snake_case)
+- Columns: `created_at`, `updated_at`, `birth_date`
+- Indexes: Auto-generated with descriptive names
+
+## 🔐 Authentication
+
+### Endpoints
 - `POST /auth/register` - Register new user
 - `POST /auth/login` - Login user
 - `GET /auth/me` - Get current user profile
@@ -73,57 +121,52 @@ src/
 - `PUT /auth/users/{user_id}` - Update user (owner only)
 - `DELETE /auth/users/{user_id}` - Delete user (owner only)
 
-### Health Check
-- `GET /health` - Application health status
-- `GET /` - API information
-
-## Database Migrations
-
-Create a new migration:
+### Usage Example
 ```bash
-alembic revision --autogenerate -m "description"
+# Register
+curl -X POST "http://localhost:8000/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john", "email": "john@example.com", "password": "secret123"}'
+
+# Login
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john", "password": "secret123"}'
+
+# Use token in subsequent requests
+curl -X GET "http://localhost:8000/auth/me" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
-Apply migrations:
-```bash
-alembic upgrade head
-```
+## 🧪 Testing
 
-Rollback migration:
 ```bash
-alembic downgrade -1
-```
-
-## Testing
-
-Run all tests:
-```bash
+# Run all tests
 pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Run specific test file
+pytest tests/test_auth.py -v
 ```
 
-Run with coverage:
-```bash
-pytest --cov=src
+## 🏗️ Adding New Domains
+
+1. Create domain directory: `src/your_domain/`
+2. Add required files: `router.py`, `schemas.py`, `models.py`, `service.py`
+3. Register router in `src/main.py`:
+```python
+from src.your_domain.router import router as your_domain_router
+app.include_router(your_domain_router, prefix="/your-domain", tags=["Your Domain"])
 ```
 
-## Code Quality
+## 🔍 Health Monitoring
 
-Format code:
-```bash
-ruff format src tests
-```
+- **Basic**: `GET /health` - Database connection status
+- **Detailed**: `GET /health/detailed` - System metrics, connection pool info
 
-Lint code:
-```bash
-ruff check src tests
-```
-
-Fix linting issues:
-```bash
-ruff check --fix src tests
-```
-
-## Environment Variables
+## 📦 Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -133,31 +176,24 @@ ruff check --fix src tests
 | `JWT_EXPIRATION_HOURS` | Token expiration time | 24 |
 | `ENVIRONMENT` | Application environment | local |
 
-## Best Practices Implemented
+## 🚢 Production Deployment
 
-- **Async routes** for non-blocking I/O operations
-- **Dependency injection** for validation and authentication
-- **Domain-driven structure** for better code organization
-- **Proper error handling** with custom exceptions
-- **Database naming conventions** following PostgreSQL standards
-- **Security middleware** for CORS and trusted hosts
-- **Comprehensive logging** with request/response tracking
-- **Type hints** throughout the codebase
-- **Pydantic validation** with built-in validators
+1. Set `ENVIRONMENT=production`
+2. Use strong `JWT_SECRET`
+3. Configure proper database connection
+4. Set up reverse proxy (nginx)
+5. Use process manager (systemd, supervisor)
+6. Enable HTTPS with SSL certificates
 
-## Production Deployment
+## 🛠️ Development Guidelines
 
-1. Set `ENVIRONMENT=production` in your environment
-2. Configure proper database connection string
-3. Set up reverse proxy (nginx)
-4. Use process manager (systemd, supervisor)
-5. Enable HTTPS with SSL certificates
-6. Configure monitoring and logging
+- Follow domain-driven structure for new features
+- Use async routes for I/O operations
+- Implement proper error handling
+- Write tests for new functionality
+- Use dependency injection for validation
+- Follow database naming conventions
 
-## Contributing
+## 📝 License
 
-1. Follow the established project structure
-2. Write tests for new features
-3. Use proper async/await patterns
-4. Follow naming conventions
-5. Update documentation as needed
+MIT License - feel free to use this boilerplate for your projects!
