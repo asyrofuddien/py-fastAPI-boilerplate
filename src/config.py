@@ -1,5 +1,4 @@
-from pydantic import BaseSettings
-from typing import Optional
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -9,8 +8,7 @@ class Settings(BaseSettings):
     JWT_EXPIRATION_HOURS: int = 24
     ENVIRONMENT: str = "local"
     
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env"}
 
 
 settings = Settings()
