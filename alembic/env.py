@@ -12,6 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.database import Base
 from src.auth.models import User  # Import all models
+from src.tasks.models import Tasks  # Import all models
 from src.config import settings
 
 # this is the Alembic Config object, which provides
