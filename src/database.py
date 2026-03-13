@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import text
 from src.config import settings
+from typing import AsyncIterator
 
 # For SQLAlchemy compatibility
 try:
@@ -32,7 +33,7 @@ class Base(DeclarativeBase):
 
 
 # Dependency to get database session
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncIterator[AsyncSession]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
